@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Разорванная летопись — цифровая мини-выставка</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#3A1C17;--ink:#F1E4CC;--soft:#C9AE8E;--line:#7A4A3A}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#5A2C22 0%,#3A1C17 55%,#22100D 100%) fixed;color:var(--ink);font-family:Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.ui{position:fixed;z-index:50;font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase}
+.tl{top:24px;left:28px;line-height:1.5}
+.tl span{display:block;color:var(--soft);font-weight:400}
+.modes{top:20px;right:24px;display:flex;gap:8px}
+.modes button{font:500 11px/1 Inter,Arial,sans-serif;letter-spacing:.02em;padding:7px 16px;border-radius:99px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;transition:background .25s,color .25s}
+.modes button.on{background:var(--ink);color:var(--bg)}
+.modes button:hover:not(.on){background:rgba(241,228,204,.1)}
+.bl{bottom:24px;left:28px}
+.br{bottom:24px;right:28px;text-align:right}
+.cap{bottom:22px;left:50%;transform:translateX(-50%);text-align:center;text-transform:none;letter-spacing:0;font-size:13px;font-weight:400;color:var(--soft);max-width:46vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .3s}
+@media(max-width:760px){.modes{top:auto;bottom:56px;left:50%;right:auto;transform:translateX(-50%)}.cap{display:none}}
+#stage{position:fixed;inset:0;touch-action:none}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.07;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 .9  0 0 0 0 .75  0 0 0 .5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");z-index:0}
+.card{position:absolute;left:0;top:0;will-change:transform;cursor:pointer;transform-origin:center}
+.card img{display:block;width:100%;height:100%;object-fit:cover;box-shadow:0 10px 26px rgba(0,0,0,.45);user-select:none;-webkit-user-drag:none;pointer-events:none;transition:filter .3s}
+.card:hover img{filter:brightness(1.06)}
+#ov{position:fixed;inset:0;z-index:100;background:rgba(30,14,11,.96);display:flex;align-items:center;justify-content:center;gap:5vw;padding:7vh 6vw;opacity:0;pointer-events:none;transition:opacity .35s}
+#ov.open{opacity:1;pointer-events:auto}
+#ov img{max-height:80vh;max-width:52vw;object-fit:contain;box-shadow:0 24px 60px rgba(0,0,0,.6);transform:scale(.96);transition:transform .45s}
+#ov.open img{transform:none}
+#ov .txt{max-width:420px}
+#ov .no{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+#ov h2{font-family:'Cormorant Garamond',Georgia,serif;font-weight:500;font-size:44px;line-height:1.05;margin:14px 0 14px}
+#ov .meta{font-size:13px;color:var(--soft);margin-bottom:18px}
+#ov p.d{font-size:15px;line-height:1.6}
+#ov blockquote{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:22px;line-height:1.35;border-left:2px solid var(--ink);padding-left:16px;margin-top:18px}
+#ov .nav{display:flex;gap:8px;margin-top:28px}
+#ov .nav button{font:500 11px/1 Inter,Arial,sans-serif;padding:8px 16px;border-radius:99px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer;text-transform:uppercase;letter-spacing:.04em}
+#ov .x{position:absolute;top:20px;right:24px;font:500 11px Inter,Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;background:none;border:none;cursor:pointer;color:var(--ink)}
+@media(max-width:760px){#ov{flex-direction:column;gap:20px;overflow:auto;justify-content:flex-start}#ov img{max-width:90vw;max-height:48vh}#ov h2{font-size:32px}}
+</style>
+</head>
+<body>
+<div class="ui tl">Разорванная летопись<span>Зданевичи и Ярмоленко · 1918–1934</span></div>
+<div class="ui modes" role="tablist">
+  <button data-m="flat" class="on">Круг</button>
+  <button data-m="tilt">Наклон</button>
+  <button data-m="ring">Кольцо</button>
+  <button data-m="gallery">Галерея</button>
+</div>
+<div class="grain"></div><div id="stage"></div>
+<div class="ui bl">Листайте, чтобы смотреть</div>
+<div class="ui cap" id="cap"></div>
+<div class="ui br" id="count">01 — 09</div>
+
+<div id="ov" role="dialog" aria-modal="true">
+  <button class="x" id="x">Закрыть ✕</button>
+  <img id="ovimg" alt="">
+  <div class="txt">
+    <div class="no" id="ovno"></div>
+    <h2 id="ovt"></h2>
+    <div class="meta" id="ovm"></div>
+    <p class="d" id="ovd"></p>
+    <blockquote id="ovq"></blockquote>
+    <div class="nav"><button id="prev">← Назад</button><button id="next">Дальше →</button></div>
+  </div>
+</div>
+
+<script>
+const ITEMS=[
+ {src:'img/p5.jpg',w:992,h:1400,t:'Подпоручик Георгий',m:'1918 г. · студийный портрет',d:'Прапрадед Георгий Константинович Зданевич, сын священника и выпускник Ростовского реального училища. Дома его помнили полковником Белой армии, а картотека С. В. Волкова записала подпоручиком Донского корпуса.'},
+ {src:'img/b3.jpg',w:817,h:1280,t:'«На память от Папы»',m:'Оборот · Перник, 2 марта 1930',d:'Отец дарит восьмилетней дочери фотографию. В 1930 году Георгий всё ещё в Пернике и рядом с Женей, хотя брак уже распался.',q:'Милому моему Ангелу, дорогой моей крошке-дочурке Женюрке на память от Папы.'},
+ {src:'img/p1.jpg',w:1400,h:837,t:'Женя и отец',m:'1925 г. · г. Перник, Болгария',d:'Прабабушка Евгения — спереди на руках, её отец Георгий — крайний справа. Бывший Гундоровский полк стал рабочим, офицеры спустились в угольные копи.'},
+ {src:'img/b2.jpg',w:1280,h:812,t:'«Мамочке-капризуле»',m:'Оборот · Перник, 20 сентября 1925',d:'Трёхлетняя Женя ещё не умела писать — подпись, скорее всего, сделана рукой взрослого от её имени.',q:'Милой мамочке-капризуле от непослушной дочки Жени.'},
+ {src:'img/p3.jpg',w:1400,h:895,t:'Шахтёры',m:'1925–1928 гг. · г. Перник',d:'Рабочие у кирпичной стены мастерской. Так выглядела новая служба вчерашних офицеров: кайло вместо шашки, бараки вместо казарм.'},
+ {src:'img/p2.jpg',w:1400,h:1050,t:'Два брата',m:'1932 г. · с. Княжево, обл. Хасково',d:'Прапрадед Георгий (справа) и его брат Николай, иеромонах. Семейное предание о «ростовском настоятеле» оказалось рассказом сразу о двух священниках — отце и брате Георгия.'},
+ {src:'img/b1.jpg',w:865,h:1280,t:'Открытка тёти Маруси',m:'Оборот · с. Княжево, март 1932',d:'Самая длинная надпись в альбоме. Новые имена для поиска: тётя Маруся, её дети Элли и Коля, дядя Лёня.',q:'Помни, детуська, на первом месте мамочка, потом папа, дядя Лёня и затем тётя Маруся.'},
+ {src:'img/p4.jpg',w:1400,h:900,t:'Снова в одном кадре',m:'1932 г. · с. Княжево',d:'Георгий — на заднем плане слева, прапрабабушка Александра Стефановна — вторая слева, Евгения — на переднем плане. Её отец и брат, Стефан и Владимир Ярмоленко, погибли заложниками в Сквире в 1919–1920 годах; их фотографий не сохранилось.'},
+ {src:'img/p6.jpg',w:1043,h:1400,t:'Евгения',m:'1934 г. · студийный портрет',d:'Двенадцатилетняя Женя в праздничном русском костюме с кокошником. Девочка, родившаяся в эмиграции, — последний экспонат выставки.'}
+];
+const N=ITEMS.length, stage=document.getElementById('stage');
+const cards=[];
+for(let i=0;i<N;i++){
+  const it=ITEMS[i%ITEMS.length];
+  const el=document.createElement('div');el.className='card';
+  const im=new Image();im.src=it.src;im.alt=it.t;im.decoding='async';el.appendChild(im);
+  stage.appendChild(el);
+  const c={el,item:i%ITEMS.length,ar:it.w/it.h,x:0,y:0,s:.01,z:0,o:0,px:0,py:0};
+  el.addEventListener('click',e=>{if(!dragMoved)openItem(c.item)});
+  cards.push(c);
+}
+let mode='flat',rot=0,vel=0,W=innerWidth,H=innerHeight,mx=-9999,my=-9999;
+addEventListener('resize',()=>{W=innerWidth;H=innerHeight});
+const TAU=Math.PI*2;
+
+function proj(a,R,ax,az,D){
+  let x=R*Math.cos(a),y=R*Math.sin(a),z=0;
+  // tilt around X
+  let y1=y*Math.cos(ax), z1=y*Math.sin(ax);
+  // rotate around Z
+  let x2=x*Math.cos(az)-y1*Math.sin(az), y2=x*Math.sin(az)+y1*Math.cos(az);
+  const k=D/(D-z1);
+  return {x:x2*k,y:y2*k,k,z:z1};
+}
+function target(c,i){
+  const m=Math.min(W,H), base=m*0.115;
+  const a=i/N*TAU+rot;
+  if(mode==='flat'){
+    const R=m*0.27;
+    return {x:W/2+R*Math.cos(a-Math.PI/2),y:H/2+R*Math.sin(a-Math.PI/2),s:base,z:Math.cos(a)*0+i,o:1};
+  }
+  if(mode==='ring'){
+    const R=m*0.36, p=proj(a,R,1.1,-0.62,m*1.9);
+    return {x:W/2+p.x,y:H/2+p.y,s:base*p.k*0.95,z:p.z,o:1};
+  }
+  if(mode==='tilt'){
+    const R=Math.max(W,H)*0.36, D=R*2.2, p=proj(a,R,1.22,0,D);
+    const o=p.k>2.7?0:1;
+    return {x:W/2+p.x,y:H*0.42+p.y*0.62,s:base*Math.min(p.k,2.8),z:p.z,o};
+  }
+  // gallery
+  let u=((i/N+rot/TAU)%1+1)%1-0.5;
+  const x=u*W*2.3, g=Math.exp(-Math.pow(x/(W*0.24),2));
+  return {x:W/2+x,y:H/2,s:base*(0.6+1.6*g),z:g,o:1};
+}
+
+let dragMoved=false;
+function frame(){
+  if(!overlayOpen){rot+=vel;vel*=0.92;if(Math.abs(vel)<0.0006)vel=mode==='gallery'?0:0.0006*Math.sign(vel||1)}
+  let best=null,bestScore=-1e9;
+  const pr=Math.min(W,H)*0.22;
+  cards.forEach((c,i)=>{
+    const t=target(c,i);
+    // pointer push
+    const dx=t.x-mx,dy=t.y-my,d=Math.hypot(dx,dy);
+    let px=0,py=0;
+    if(d<pr&&d>0.1){const f=(1-d/pr)*Math.min(W,H)*0.09;px=dx/d*f;py=dy/d*f}
+    c.px+=(px-c.px)*0.12;c.py+=(py-c.py)*0.12;
+    const e=0.085;
+    c.x+=(t.x-c.x)*e;c.y+=(t.y-c.y)*e;c.s+=(t.s-c.s)*e;c.o+=(t.o-c.o)*0.15;c.z=t.z;
+    const w=c.ar>=1?c.s*Math.sqrt(c.ar):c.s*Math.sqrt(c.ar), h=w/c.ar;
+    const X=c.x+c.px-w/2, Y=c.y+c.py-h/2;
+    c.el.style.width=w+'px';c.el.style.height=h+'px';
+    c.el.style.transform=`translate3d(${X}px,${Y}px,0)`;
+    c.el.style.zIndex=Math.round(1000+c.z*10);
+    c.el.style.opacity=c.o.toFixed(3);
+    c.el.style.pointerEvents=c.o<0.5?'none':'auto';
+    // active = frontmost / closest to anchor
+    let score;
+    if(mode==='flat'){const a=((i/N*TAU+rot)%TAU+TAU)%TAU;score=-Math.min(a,TAU-a)}
+    else score=c.z*(mode==='gallery'?1:1)+ (mode==='tilt'&&c.o<0.5?-1e6:0) - (mode==='tilt'?Math.abs(c.x-W/2)/W:0);
+    if(score>bestScore){bestScore=score;best=c}
+  });
+  if(best){const n=best.item+1;const s=String(n).padStart(2,'0')+' — '+String(ITEMS.length).padStart(2,'0');if(count.textContent!==s){count.textContent=s;cap.textContent=ITEMS[best.item].t+' · '+ITEMS[best.item].m}}
+  requestAnimationFrame(frame);
+}
+const count=document.getElementById('count'),cap=document.getElementById('cap');
+
+addEventListener('wheel',e=>{if(overlayOpen)return;e.preventDefault();const d=Math.abs(e.deltaY)>Math.abs(e.deltaX)?e.deltaY:e.deltaX;vel+=d*0.00018},{passive:false});
+let dragging=false,lx=0,ly=0;
+stage.addEventListener('pointerdown',e=>{dragging=true;dragMoved=false;lx=e.clientX;ly=e.clientY});
+addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY;if(dragging){const dx=e.clientX-lx,dy=e.clientY-ly;if(Math.abs(dx)+Math.abs(dy)>4)dragMoved=true;vel+=(mode==='gallery'?-dx:(dx+dy))*0.00025;lx=e.clientX;ly=e.clientY}});
+addEventListener('pointerup',()=>{dragging=false;setTimeout(()=>dragMoved=false,0)});
+addEventListener('pointerleave',()=>{mx=my=-9999});
+document.addEventListener('mouseleave',()=>{mx=my=-9999});
+addEventListener('keydown',e=>{
+  if(e.key==='Escape')closeOv();
+  if(overlayOpen){if(e.key==='ArrowRight')step(1);if(e.key==='ArrowLeft')step(-1);return}
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')vel+=0.02;
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')vel-=0.02;
+});
+document.querySelectorAll('.modes button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.modes button').forEach(x=>x.classList.toggle('on',x===b));mode=b.dataset.m;
+}));
+
+const ov=document.getElementById('ov');let overlayOpen=false,cur=0;
+function openItem(k){cur=k;const it=ITEMS[k];
+  ovimg.src=it.src;ovimg.alt=it.t;ovno.textContent='Экспонат '+String(k+1).padStart(2,'0')+' / '+String(ITEMS.length).padStart(2,'0');
+  ovt.textContent=it.t;ovm.textContent=it.m;ovd.textContent=it.d;ovq.textContent=it.q||'';ovq.style.display=it.q?'block':'none';
+  ov.classList.add('open');overlayOpen=true}
+function closeOv(){ov.classList.remove('open');overlayOpen=false}
+function step(d){openItem((cur+d+ITEMS.length)%ITEMS.length)}
+document.getElementById('x').onclick=closeOv;
+document.getElementById('prev').onclick=()=>step(-1);
+document.getElementById('next').onclick=()=>step(1);
+ov.addEventListener('click',e=>{if(e.target===ov)closeOv()});
+const ovimg=document.getElementById('ovimg'),ovno=document.getElementById('ovno'),ovt=document.getElementById('ovt'),ovm=document.getElementById('ovm'),ovd=document.getElementById('ovd'),ovq=document.getElementById('ovq');
+// initial
+cards.forEach((c,i)=>{const t=target(c,i);c.x=W/2;c.y=H/2;c.s=1});
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
